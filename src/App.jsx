@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import getFormattedWeatherData from "./services/weather.service";
-import MainIformation from "./components/MainInformation/MainIformation";
+import MainInformation from "./components/MainInformation/MainIformation.jsx";
 import MoreInfo from "./components/MoreInfo/MoreInfo";
 
 function App() {
@@ -8,24 +8,35 @@ function App() {
   const [units, setUnits] = useState("metric");
   const [weather, setWeather] = useState(null);
   const [cityInput, setCityInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchWeatherData();
-  }, [query, units]);
+    if (query.q) {
+      fetchWeatherData();
+    }
+  }, [query]);
 
   const fetchWeatherData = async () => {
     try {
+      setLoading(true);
       const data = await getFormattedWeatherData({ ...query, ...units });
       setWeather(data);
     } catch (error) {
       console.error("Ошибка при получении данных о погоде:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSearch = () => {
     if (cityInput.trim() !== "") {
       setQuery({ q: cityInput });
+      setCityInput("");
     }
+  };
+
+  const handleInputChange = (e) => {
+    setCityInput(e.target.value);
   };
 
   return (
@@ -35,18 +46,19 @@ function App() {
               type="text"
               placeholder="Введите название города"
               value={cityInput}
-              onChange={(e) => setCityInput(e.target.value)}
+              onChange={handleInputChange}
           />
           <button onClick={handleSearch}>Поиск</button>
         </div>
-        {weather ? (
+        {loading ? (
+            <div>Загрузка...</div>
+        ) : weather ? (
             <div>
-              {" "}
-              <MainIformation weather={weather} />
-              <MoreInfo />
+              <MainInformation weather={weather} />
+              <MoreInfo name={query.q} />
             </div>
         ) : (
-            <div>Ничего нету</div>
+            <div>Ничего нет</div>
         )}
       </div>
   );
